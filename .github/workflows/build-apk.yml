@@ -24,22 +24,22 @@ jobs:
         with:
           gradle-version: '8.7'
 
-      - name: Build Debug APK
-        run: gradle assembleDebug --stacktrace
-
-      - name: Build Unsigned Release APK
-        run: gradle assembleRelease --stacktrace
+      - name: Find Project Root & Build Debug APK
+        run: |
+          SETTINGS_FILE=$(find . -maxdepth 3 -name "settings.gradle.kts" | head -n 1)
+          if [ -z "$SETTINGS_FILE" ]; then
+            echo "ERROR: settings.gradle.kts not found in repository!"
+            ls -la
+            exit 1
+          fi
+          PROJECT_DIR=$(dirname "$SETTINGS_FILE")
+          echo "PROJECT_DIR=$PROJECT_DIR" >> $GITHUB_ENV
+          cd "$PROJECT_DIR"
+          gradle assembleDebug
 
       - name: Upload Debug APK Artifact
         uses: actions/upload-artifact@v4
         with:
           name: UniqueVideoStudio-Debug-APK
-          path: app/build/outputs/apk/debug/*.apk
+          path: ${{ env.PROJECT_DIR }}/app/build/outputs/apk/debug/*.apk
           if-no-files-found: error
-
-      - name: Upload Release APK Artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: UniqueVideoStudio-Release-Unsigned-APK
-          path: app/build/outputs/apk/release/*.apk
-          if-no-files-found: warn
