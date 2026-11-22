@@ -24,16 +24,22 @@ jobs:
         with:
           gradle-version: '8.7'
 
-      - name: Find Project Root & Build Debug APK
+      - name: Auto-Unzip & Build Debug APK
         run: |
-          SETTINGS_FILE=$(find . -maxdepth 3 -name "settings.gradle.kts" | head -n 1)
+          ZIP_FILE=$(find . -maxdepth 2 -name "*.zip" | head -n 1)
+          if [ -n "$ZIP_FILE" ]; then
+            echo "Unzipping $ZIP_FILE..."
+            unzip -o "$ZIP_FILE" -d extracted_project
+          fi
+          SETTINGS_FILE=$(find . -maxdepth 4 -name "settings.gradle.kts" | head -n 1)
           if [ -z "$SETTINGS_FILE" ]; then
-            echo "ERROR: settings.gradle.kts not found in repository!"
-            ls -la
+            echo "ERROR: settings.gradle.kts not found!"
+            find . -maxdepth 3
             exit 1
           fi
           PROJECT_DIR=$(dirname "$SETTINGS_FILE")
           echo "PROJECT_DIR=$PROJECT_DIR" >> $GITHUB_ENV
+          echo "Building from: $PROJECT_DIR"
           cd "$PROJECT_DIR"
           gradle assembleDebug
 
